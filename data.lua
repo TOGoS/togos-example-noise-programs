@@ -60,4 +60,21 @@ data:extend{
       return noise.terrace_for_cliffs(bn, ts, map)
     end)
   },
+  {
+    type = "noise-expression",
+    name = "starting-area-webbing",
+    expression = noise.define_noise_function( function(x,y,tile,map)
+      reset_seed(map.seed)
+      -- TODO: divide 32 by map.segmentation_multiplier
+      -- when compiler is able to handle complex constant expressions
+      local continents = new_basis_noise(x,y,16,1/1024)
+      local webbing = noise.ridge(new_basis_noise(x,y,32,1/64), -math.huge, 16)
+      local regular = noise.max(continents, webbing - tile.tier)
+      -- We want the transitions in terrace strength to be sharp,
+      -- because values between 0 and 1 result in crappy little chunks of cliffs,
+      -- but not /too/ sharp, or the terracing strength transition will itself create cliffs!
+      local ts = noise.clamp(new_basis_noise(x,y,2,1/64), -1, 0)
+      return noise.terrace_for_cliffs(regular, ts, map)
+    end)
+  },
 }
