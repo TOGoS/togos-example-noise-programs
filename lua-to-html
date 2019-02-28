@@ -22,6 +22,29 @@ local function inline_markdown_to_html(text)
   return string.gsub(text, "`([^`]*)`", function(c) return "<code>"..c.."</code>" end)
 end
 
+-- Code block handler
+
+local function code_block_on_line(ctx, line)
+  if line:sub(1,#ctx.source_indent) ~= ctx.source_indent then
+    io.write("</pre></blockquote>")
+    return ctx.parent:on_line(line)
+  end
+  io.write("\n" .. html_text_escape(line:sub(#ctx.source_indent+1)))
+  return ctx
+end
+
+local function open_code_block(parent, indent, code_line)
+  print_spacer_line()
+  io.write("<blockquote><pre>" .. html_text_escape(code_line))
+  return {
+    source_indent = indent,
+    on_line = code_block_on_line,
+    parent = parent
+  }
+end
+
+-- Paragraph handler
+
 local function paragraph_handle_line(ctx,line)
   if line == "" or line == "]]--" then
     print("</p>")
@@ -40,6 +63,8 @@ local function open_paragraph(parent, line)
   }
 end
 
+-- General comment handler
+
 local function comment_context_handle_line(ctx, line)
   if line == "]]--" then return ctx.parent end
   
@@ -53,6 +78,11 @@ local function comment_context_handle_line(ctx, line)
     print("<figcaption>" .. inline_markdown_to_html(caption) .. "</figcaption>")
     print("</figure>")
     return ctx
+  end
+
+  local code_block_indent, code_line = string.match(line, "^(%s+)(.*)$")
+  if code_block_indent then
+    return open_code_block(ctx, code_block_indent, code_line)
   end
 
   return open_paragraph(ctx, line)
