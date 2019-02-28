@@ -4,6 +4,7 @@
   "title": "TOGoS's Noise Programs",
   "author": "TOGoS",
   "contact": "togos00@gmail.com",
-  "homepage": "http://www.nuke24.net",
-  "dependencies": []
+  "homepage": "https://github.com/TOGoS/TOGFactorioNoisePrograms",
+  "dependencies": ["base >= 0.17"],
+  "description": "Various terrain generators to demonstrate the noise expression system"
 }
