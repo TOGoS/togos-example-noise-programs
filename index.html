@@ -1,0 +1,117 @@
+<html>
+<head>
+<title>Factorio Noise Expression Tutorial</title>
+<link rel="stylesheet" href="the-style.css"/>
+</head>
+<body>
+
+<h1>Factorio Noise Expression Tutorial</h1>
+
+<p>Welcome to the factorio noise expression tutorial!
+This assumes that you're authoring a mod and putting most of
+the code directly into data.lua.</p>
+
+<p>The source code for this page is itself <a href="data.lua">a data.lua file</a>,
+processed to generate this HTML.</p>
+
+<p>Let's start with some boilerplate imports:</p>
+
+<blockquote class="data-lua"><pre>-- The 'noise' library from Factorio core is not strictly necessary for
+-- constructing noise programs, but it makes it a lot easier, so let's import it:
+local noise = require("noise")
+
+-- 'tne' is the idiomatic alias for the 'to noise expression' function:
+local tne = noise.to_noise_expression</pre></blockquote>
+<p>I'm going to define some custom elevation generators,
+because elevation has the most dramatic effect
+and is probably the most useful thing to customize:
+water is placed anywhere elevation is less than zero,
+and cliffs are placed along elevation contours.</p>
+<h2>Simplest possible elevation generator</h2>
+
+<p>For starters, let's define the simplest possible expression: one that just returns a constant value.</p>
+
+<p>We'll add a 'named noise expression' prototype (<code>type = "noise-expression"</code>),
+which wraps a raw noise expression to give it a name and some other metadata.</p>
+
+<p>The expression itself has a type and other fields depending on the type.
+To make an expression that always returns a constant number which we provide
+directly <code>type = "literal-number"</code>, and <code>literal_value</code> = the numeric value we want to return.</p>
+
+<blockquote class="data-lua"><pre>data:extend{
+  {
+    type = "noise-expression",
+    name = "constant-one-hundred",
+    intended_property = "elevation",
+    expression = {
+      type = "literal-number",
+      literal_value = 100
+    }
+  }
+}</pre></blockquote>
+<p>Setting intended_property = "elevation" makes this available in the
+'Map type' &#47; 'Elevation generator' drop-down on the map generator options screen
+when you start a new game.</p>
+
+<p>Without that, you'd still be able to create a game using this generator,
+but you'd have to do it using a custom mapgensettings JSON file and
+<code>--create</code> a save from the command-line.</p>
+
+<p>We also need to add text to our words.cfg so that the dropdown shows nicely:</p>
+
+<p>  [noise-expression]
+  constant-one-hundred=One Hundred</p>
+
+<figure>
+<img src="https:&#47;&#47;i.imgur.com&#47;45vh6gk.png"/>
+<figcaption>our "One Hundred" elevation generator appearing in the elevation ('Map type') drop-down</figcaption>
+</figure>
+
+<p>https:&#47;&#47;i.imgur.com&#47;45vh6gk.png -- our "One Hundred" elevation generator appearing in the elevation ('Map type') drop-down</p>
+
+<figure>
+<img src="https:&#47;&#47;i.imgur.com&#47;sb3GMLN.png"/>
+<figcaption>The result of our <code>elevation=100</code> generator.</figcaption>
+</figure>
+
+<p>https:&#47;&#47;i.imgur.com&#47;sb3GMLN.png -- The result of our <code>elevation=100</code> generator.</p>
+<h2>Variables</h2>
+
+<p>Noise expressions used by the terrain generator are evaluated at every point on the map.
+Therefore <code>x</code>, <code>y</code>, and <code>distance</code> variables are provided, which resolve to the x and y coordinate
+and distance from the closest starting point.</p>
+
+<p>Let's make a new elevation generator that just returns the value of <code>x</code>.
+The expressionw will be of </p>
+
+<blockquote class="data-lua"><pre>data:extend{
+  {
+    type = "noise-expression",
+    name = "just-x",
+    intended_property = "elevation",
+    expression = {
+      type = "variable",
+      variable_name = "x"
+    }
+  }
+}</pre></blockquote>
+<p>Again, we'll add the name "just-x" to our words.cfg:</p>
+
+<p>  [noise-expression]
+  constant-one-hundred=One Hundred
+  just-x=Just X</p>
+
+<p>Restart factorio to reload the mod, select it from the list, and...</p>
+
+<figure>
+<img src="https:&#47;&#47;i.imgur.com&#47;gp2jiCd.png"/>
+<figcaption>Just X</figcaption>
+</figure>
+
+<p>https:&#47;&#47;i.imgur.com&#47;gp2jiCd.png -- Just X</p>
+
+<p>Pretty boring, huh?
+But the water to the west (where <code>x &lt; 0</code>) and lines of cliffs to the east
+clearly show how <code>x</code>, <code>elevation</code>, water, and cliffs are related.</p>
+</body>
+</html>
