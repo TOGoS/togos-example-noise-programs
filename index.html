@@ -59,22 +59,17 @@ but you'd have to do it using a custom mapgensettings JSON file and
 
 <p>We also need to add text to our words.cfg so that the dropdown shows nicely:</p>
 
-<p>  [noise-expression]
-  constant-one-hundred=One Hundred</p>
-
+<blockquote><pre>[noise-expression]
+constant-one-hundred=One Hundred</pre></blockquote>
 <figure>
 <img src="https:&#47;&#47;i.imgur.com&#47;45vh6gk.png"/>
 <figcaption>our "One Hundred" elevation generator appearing in the elevation ('Map type') drop-down</figcaption>
 </figure>
 
-<p>https:&#47;&#47;i.imgur.com&#47;45vh6gk.png -- our "One Hundred" elevation generator appearing in the elevation ('Map type') drop-down</p>
-
 <figure>
 <img src="https:&#47;&#47;i.imgur.com&#47;sb3GMLN.png"/>
 <figcaption>The result of our <code>elevation=100</code> generator.</figcaption>
 </figure>
-
-<p>https:&#47;&#47;i.imgur.com&#47;sb3GMLN.png -- The result of our <code>elevation=100</code> generator.</p>
 <h2>Variables</h2>
 
 <p>Noise expressions used by the terrain generator are evaluated at every point on the map.
@@ -97,18 +92,15 @@ The expressionw will be of </p>
 }</pre></blockquote>
 <p>Again, we'll add the name "just-x" to our words.cfg:</p>
 
-<p>  [noise-expression]
-  constant-one-hundred=One Hundred
-  just-x=Just X</p>
-
+<blockquote><pre>[noise-expression]
+constant-one-hundred=One Hundred
+just-x=Just X</pre></blockquote>
 <p>Restart factorio to reload the mod, select it from the list, and...</p>
 
 <figure>
 <img src="https:&#47;&#47;i.imgur.com&#47;gp2jiCd.png"/>
 <figcaption>Just X</figcaption>
 </figure>
-
-<p>https:&#47;&#47;i.imgur.com&#47;gp2jiCd.png -- Just X</p>
 
 <p>Pretty boring, huh?
 But the water to the west (where <code>x &lt; 0</code>) and lines of cliffs to the east
