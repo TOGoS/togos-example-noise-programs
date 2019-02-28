@@ -1,0 +1,125 @@
+#!/usr/bin/env lua
+
+-- From https://github.com/kernelsauce/turbo/blob/master/turbo/escape.lua
+function html_text_escape(s)
+  assert("Expected string in argument #1.")
+  return (string.gsub(s, "[}{\">/<'&]", {
+    ["&"] = "&amp;",
+    ["<"] = "&lt;",
+    [">"] = "&gt;",
+--    ['"'] = "&quot;",
+--    ["'"] = "&#39;",
+    ["/"] = "&#47;"
+  }))
+end
+
+local function print_spacer_line()
+  print("")
+end
+
+local function inline_markdown_to_html(text)
+  text = html_text_escape(text)
+  return string.gsub(text, "`([^`]*)`", function(c) return "<code>"..c.."</code>" end)
+end
+
+local function paragraph_handle_line(ctx,line)
+  if line == "" or line == "]]--" then
+    print("</p>")
+    return ctx.parent:on_line(line)
+  end
+  io.write("\n" .. inline_markdown_to_html(line))
+  return ctx
+end
+
+local function open_paragraph(parent, line)
+  print_spacer_line()
+  io.write("<p>" .. inline_markdown_to_html(line));
+  return {
+    on_line = paragraph_handle_line,
+    parent = parent
+  }
+end
+
+local function comment_context_handle_line(ctx, line)
+  if line == "]]--" then return ctx.parent end
+  
+  if line == "" then return ctx end
+  
+  local image_ref, caption = string.match(line, "([^%s]+) %-%- (.*)")
+  if image_ref then
+    print_spacer_line()
+    print("<figure>")
+    print("<img src=\"" .. html_text_escape(image_ref) .. "\"/>")
+    print("<figcaption>" .. inline_markdown_to_html(caption) .. "</figcaption>")
+    print("</figure>")
+    return ctx
+  end
+
+  return open_paragraph(ctx, line)
+end
+
+local function open_comment_context(parent, heading)
+  if heading then
+    print("<h2>" .. html_text_escape(heading) .. "</h2>")
+  end
+  return {
+    on_line = comment_context_handle_line,
+    parent = parent
+  }
+end
+
+local function format_bool(b)
+  if b then return "true" else return "false" end
+end
+
+local function lua_context_flush(ctx)
+  local first_non_empty_line_index = nil
+  local last_non_empty_line_index = 0
+  for index,line in ipairs(ctx.code_lines) do
+    local line_is_blank = string.match(line, "^%s*$")
+    if not first_non_empty_line_index and not line_is_blank then
+      first_non_empty_line_index = index
+    end
+    if not line_is_blank then
+      last_non_empty_line_index = index
+    end
+  end
+  if first_non_empty_line_index then
+    print_spacer_line()
+    io.write("<blockquote class=\"data-lua\"><pre>")
+    for i = first_non_empty_line_index, last_non_empty_line_index do
+      if i ~= first_non_empty_line_index then
+	io.write("\n")
+      end
+      io.write(html_text_escape(ctx.code_lines[i]))
+    end
+    io.write("</pre></blockquote>");
+  end
+  ctx.code_lines = {}
+end
+
+local function lua_context_handle_line(ctx, line)
+  -- io.write("# Lua context: handling line: «"..line.."»\n")
+  local heading = line.match(line, "--%[%[ (.*)")
+  if heading then
+    ctx:flush()
+    return open_comment_context(ctx, heading)
+  elseif line == "--[[" then
+    ctx:flush()
+    return open_comment_context(ctx)
+  else
+    ctx.code_lines[#ctx.code_lines+1] = line
+  end
+  return ctx
+end
+
+local context = {
+  on_line = lua_context_handle_line,
+  flush = lua_context_flush,
+  code_lines = {},
+  parent = nil
+}
+
+for line in io.lines() do
+  context = context:on_line(line)
+end

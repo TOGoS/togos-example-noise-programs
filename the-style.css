@@ -1,0 +1,19 @@
+body {
+    font-family: sans-serif;
+}
+blockquote {
+    margin: 4px 4px 4px 12px;
+    padding: 4px;
+}
+blockquote.data-lua {
+    background: rgba(0,128,192,0.25);
+    border: 1px solid rgba(0,128,192,0.75);
+    padding-left: 12px;
+}
+figure {
+    margin: auto;
+    text-align: center;
+}
+figcaption {
+    font-style: italic;
+}

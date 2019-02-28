@@ -1,3 +1,7 @@
+--[[
+Let's start with some boilerplate imports:
+]]--
+
 -- The 'noise' library from Factorio core is not strictly necessary for
 -- constructing noise programs, but it makes it a lot easier, so let's import it:
 local noise = require("noise")
