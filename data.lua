@@ -143,23 +143,7 @@ data:extend{
       reset_seed(map.seed)
       -- TODO: divide 32 by map.segmentation_multiplier
       -- when compiler is able to handle complex constant expressions
-      return new_basis_noise(x,y,32)
-    end)
-  },
-  {
-    type = "noise-expression",
-    name = "terraced-basis-noise",
-    intended_property = "elevation",
-    expression = noise.define_noise_function( function(x,y,tile,map)
-      reset_seed(map.seed)
-      -- TODO: divide 32 by map.segmentation_multiplier
-      -- when compiler is able to handle complex constant expressions
-      local bn = new_basis_noise(x,y,16,1/64)
-      -- We want the transitions in terrace strength to be sharp,
-      -- because values between 0 and 1 result in crappy little chunks of cliffs,
-      -- but not /too/ sharp, or the terracing strength transition will itself create cliffs!
-      local ts = noise.clamp(new_basis_noise(x,y,2,1/64), 0, 1)
-      return noise.terrace_for_cliffs(bn, ts, map)
+      return new_basis_noise(x, y, 32 * map.segmentation_multiplier)
     end)
   },
   {
