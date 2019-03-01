@@ -70,7 +70,7 @@ local function comment_context_handle_line(ctx, line)
   
   if line == "" then return ctx end
   
-  local image_ref, caption = string.match(line, "([^%s]+) %-%- (.*)")
+  local image_ref, caption = string.match(line, "^Illustration: ([^%s]+) %-%- (.*)")
   if image_ref then
     print_spacer_line()
     print("<figure>")
