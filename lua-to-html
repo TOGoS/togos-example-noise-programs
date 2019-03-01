@@ -13,6 +13,18 @@ function html_text_escape(s)
   }))
 end
 
+function html_attribute_escape(s)
+  assert("Expected string in argument #1.")
+  return (string.gsub(s, "[}{\">/<'&]", {
+    ["&"] = "&amp;",
+    ["<"] = "&lt;",
+    [">"] = "&gt;",
+    ['"'] = "&quot;",
+    ["'"] = "&#39;",
+    ["/"] = "&#47;"
+  }))
+end
+
 local function print_spacer_line()
   print("")
 end
@@ -45,6 +57,28 @@ local function open_code_block(parent, indent, code_line)
     on_line = code_block_on_line,
     parent = parent
   }
+end
+
+-- List handler
+
+local function list_handle_line(ctx, line)
+  if line:sub(1,2) ~= "- " then
+    print("</ul>")
+    return ctx.parent:on_line(line)
+  end
+  local line_content = line:sub(3)
+  print("<li>" .. inline_markdown_to_html(line_content) .. "</li>")
+  return ctx  
+end
+
+local function open_list(parent, line)
+  -- For now, list items must start with exactly "- " and must fit entirely on one line
+  print("<ul>")
+  local ctx = {
+    on_line = list_handle_line,
+    parent = parent
+  }
+  return ctx:on_line(line)
 end
 
 -- Paragraph handler
@@ -85,7 +119,7 @@ local function comment_context_handle_line(ctx, line)
     local illusinfo = parse_illustration_info(illuscode)
     print_spacer_line()
     print("<figure>")
-    print("<img src=\"" .. html_text_escape(illusinfo.image_ref) .. "\"/>")
+    print("<img src=\"" .. html_attribute_escape(illusinfo.image_ref) .. "\"/>")
     if illusinfo.caption then
       print("<figcaption>" .. inline_markdown_to_html(illusinfo.caption) .. "</figcaption>")
     end
@@ -96,6 +130,10 @@ local function comment_context_handle_line(ctx, line)
   local code_block_indent, code_line = string.match(line, "^(%s+)(.*)$")
   if code_block_indent then
     return open_code_block(ctx, code_block_indent, code_line)
+  end
+
+  if line:sub(1,2) == "- " then
+    return open_list(ctx, line)
   end
 
   return open_paragraph(ctx, line)
