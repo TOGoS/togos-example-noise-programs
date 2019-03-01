@@ -332,7 +332,7 @@ Illustration: https://i.imgur.com/P83fvDS.png -- Guaranteed starting lake!
 
 It's not the most interesting lake, but there's guaranteed to be some water, now,
 so players can definitely build some working steam boilers.
---]]
+]]--
 
 --[[ Basis noise
 
