@@ -65,17 +65,26 @@ end
 
 -- General comment handler
 
+local function parse_illustration_info(illuscode)
+  local image_ref, caption = string.match(illuscode, "([^%s]+) %-%- (.*)")
+  if image_ref then return { image_ref = image_ref, caption = caption } end
+  return { image_ref = illuscode }
+end
+
 local function comment_context_handle_line(ctx, line)
   if line == "]]--" then return ctx.parent end
   
   if line == "" then return ctx end
   
-  local image_ref, caption = string.match(line, "^Illustration: ([^%s]+) %-%- (.*)")
-  if image_ref then
+  local illuscode = string.match(line, "^Illustration: (.*)")
+  if illuscode then
+    local illusinfo = parse_illustration_info(illuscode)
     print_spacer_line()
     print("<figure>")
-    print("<img src=\"" .. html_text_escape(image_ref) .. "\"/>")
-    print("<figcaption>" .. inline_markdown_to_html(caption) .. "</figcaption>")
+    print("<img src=\"" .. html_text_escape(illusinfo.image_ref) .. "\"/>")
+    if illusinfo.caption then
+      print("<figcaption>" .. inline_markdown_to_html(illusinfo.caption) .. "</figcaption>")
+    end
     print("</figure>")
     return ctx
   end
