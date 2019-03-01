@@ -19,7 +19,11 @@ end
 
 local function inline_markdown_to_html(text)
   text = html_text_escape(text)
-  return string.gsub(text, "`([^`]*)`", function(c) return "<code>"..c.."</code>" end)
+  text = string.gsub(text, "/([^%s/][^/]+[^%s/])/", function(c) return "<em>"..c.."</em>" end)
+  text = string.gsub(text, "`([^`]*)`", function(c) return "<code>"..c.."</code>" end)
+  text = string.gsub(text, "%*([^%s%*][^%*]+[^%s%*])%*", function(c) return "<strong>"..c.."</strong>" end)
+  text = string.gsub(text, "%[([^%]]+)%]%(([^%)]+)%)", function(text, url) return "<a href=\""..url.."\">"..text.."</a>" end)
+  return text
 end
 
 -- Code block handler
