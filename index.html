@@ -145,8 +145,9 @@ Fortunately there's a built-in Lua library to make things easier.</p>
 
 <blockquote class="data-lua"><pre>local noise = require("noise")</pre></blockquote>
 <p>There's a bunch of stuff in <code>noise</code>, but probably the most all-around useful function is
-<code>define_noise_function</code>.  It lets us define noise expressions using mostly Lua syntax
-as if we're defining a Fua function.  As its argument, it takes a function of <code>x</code>, <code>y</code>, tile properties, and map properties.</p>
+<code>define_noise_function</code>.
+It lets us define noise expressions using mostly Lua syntax as if we're defining a Lua function.
+As its argument, it takes a function of <code>x</code>, <code>y</code>, tile properties, and map properties.</p>
 
 <p>If we were to define that x-plus-y expression this way, it would look like this:</p>
 
