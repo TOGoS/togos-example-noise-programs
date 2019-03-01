@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.0.2
+Date: 01. 03. 2019
+  Changes:
+    - More comments about development of straight-basis-noise elevation generator
+    - straight-basis-noise features are 6x as large
+---------------------------------------------------------------------------------------------------
 Version: 0.0.1
 Date: 28. 02. 2019
   Features:
