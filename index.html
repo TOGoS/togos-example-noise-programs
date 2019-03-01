@@ -244,6 +244,9 @@ When you set water scale to 600%, <code>segmentation_multiplier = 1&#47;6</code>
 and divide our function's output by it
 (because if ridges are 6 times as wide, you'd expect them to be 6 times as tall, too, right?)</p>
 
+<p>In general, you'll want to multiply your <code>x</code>, <code>y</code>, and <code>distance</code> inputs by <code>segmentation_multiplier</code>,
+and divide your outputs by it.</p>
+
 <blockquote class="data-lua"><pre>data:extend{
   {
     type = "noise-expression",
@@ -339,61 +342,212 @@ a starting area lake, regardless of water level.</p>
 so players can definitely build some working steam boilers.</p>
 <h2>Basis noise</h2>
 
-<p>TODO: Write about what's going on, here.  Probably introduce the noise function by itself without all the goop around it first.</p>
+<p>To generate maps with unpredictable features, we'll use <code>factorio-basis-noise</code>, which is a
+<a href="http:&#47;&#47;libnoise.sourceforge.net&#47;coherentnoise&#47;index.html">coherent noise function</a>
+similar to Perlin or Simplex noise.</p>
 
-<p>Also note that correcting water level and adding starting area lakes is such a common thing
-that we should write a function that does all of that.</p>
+<p>This kind of function takes an <code>x</code>&#47;<code>y</code> coordinate as input and produces a value that varies continuously
+in a way that is omewhat random but with predictable characteristics.</p>
 
-<blockquote class="data-lua"><pre>local seed0 = 1
-local next_seed1 = 1
+<p>Anyway, let's try to use it by creating an expression that applies the <code>factorio-basis-noise</code> function:</p>
 
-function reset_seed(seed0)
-  seed0 = seed0
-  next_seed1 = 1
-end
-
-function get_next_seed1()
-  local s = next_seed1
-  next_seed1 = s + 7
-  return s
-end
-
-function new_basis_noise(x, y, output_scale, input_scale)
-  output_scale = output_scale or 1
-  input_scale = input_scale or 1 &#47; output_scale
-  seed1 = get_next_seed1()
-  next_seed0 = next_seed1 + 1
-  return {
-    type = "function-application",
-    function_name = "factorio-basis-noise",
-    arguments = {
-      x = tne(x),
-      y = tne(y),
-      seed0 = tne(seed0),
-      seed1 = tne(seed1),
-      input_scale = tne(input_scale),
-      output_scale = tne(output_scale)
-    }
-  }
-end
-
-data:extend{
+<blockquote class="data-lua"><pre>data:extend{
   {
     type = "noise-expression",
     name = "straight-basis-noise",
     intended_property = "elevation",
-    expression = noise.define_noise_function( function(x,y,tile,map)
-      reset_seed(map.seed)
-      local the_noise = new_basis_noise(x, y, 8 &#47; map.segmentation_multiplier, map.segmentation_multiplier &#47; 32)
-      local corrected = water_level_correct(the_noise, map)
-      local starting_lake_distance = noise.distance_from(x, y, noise.var("starting_lake_positions"))
-      local starting_lake_bottom = starting_lake_distance - 10
-      return noise.min(corrected, starting_lake_bottom)
-    end)
-  },
+    expression = {
+      type = "function-application",
+      function_name = "factorio-basis-noise",
+      arguments = {
+        x = noise.var("x"),
+        y = noise.var("y"),
+        seed0 = tne(noise.var("map_seed")), -- i.e. map.seed
+        seed1 = tne(123), -- Some random number
+        input_scale = tne(1),
+        output_scale = tne(20)
+      }
+    }
+  }
 }</pre></blockquote>
 <figure>
-<img src="https:&#47;&#47;i.imgur.com&#47;q9xJ48u.png"/>
+<img src="https:&#47;&#47;i.imgur.com&#47;FmonLMP.png"/>
+<figcaption>Uhm</figcaption>
 </figure>
+
+<p>Notice that even though we set <code>output_scale</code> to 20,
+which should result in the function's output range being about -20 to +20,
+this didn't seem to do anything.
+That's because <code>factorio-basis-noise</code> returns 0 at integer coordinates,
+which is what <code>x</code> and <code>y</code> happen to be during map generation.
+(As of 0.17, the map generator passes the coordinate of each tile's upper-left corner to the noise program.
+It would be reasonable to get the coordinates of the center of the tile, instead,
+but that wouldn't change the story very much. Either way we need to divide the inputs.)</p>
+
+<p>To solve this, we could pass in smaller <code>x</code> and <code>y</code> values:</p>
+
+<blockquote class="data-lua"><pre>data:extend{
+  {
+    type = "noise-expression",
+    name = "straight-basis-noise",
+    intended_property = "elevation",
+    expression = {
+      type = "function-application",
+      function_name = "factorio-basis-noise",
+      arguments = {
+        x = noise.var("x") &#47; 20,
+        y = noise.var("y") &#47; 20,
+        seed0 = noise.var("map_seed"), -- i.e. map.seed
+        seed1 = tne(123), -- Some random number
+        input_scale = tne(1),
+        output_scale = tne(20)
+      }
+    }
+  }
+}</pre></blockquote>
+<p>Or we could tell the basis noise to do that division internally, by
+setting its input_scale.</p>
+
+<p>And actually, as long as we're at it, let's handle <code>segmentation_multiplier</code> properly:
+multiply the inputs and divide the outputs.</p>
+
+<blockquote class="data-lua"><pre>data:extend{
+  {
+    type = "noise-expression",
+    name = "straight-basis-noise",
+    intended_property = "elevation",
+    expression = {
+      type = "function-application",
+      function_name = "factorio-basis-noise",
+      arguments = {
+        x = noise.var("x"),
+        y = noise.var("y"),
+        seed0 = noise.var("map_seed"), -- i.e. map.seed
+        seed1 = tne(123), -- Some random number
+        input_scale = noise.var("segmentation_multiplier")&#47;20,
+        output_scale = 20&#47;noise.var("segmentation_multiplier")
+      }
+    }
+  }
+}</pre></blockquote>
+<p>Note that noise expressions returned by noise.var already have the metatable added
+to allow us to do arithmetic on them, so we don't need to <code>tne</code> them before
+doing arithmetic on them or using them as sub-expressions.</p>
+
+<figure>
+<img src="https:&#47;&#47;i.imgur.com&#47;3FSRXA8.png"/>
+<figcaption>A proper basis noise map</figcaption>
+</figure>
+<h2>Abstract that starting area lake logic</h2>
+
+<p>Let's write a function to correct water level and add in the starting lake,
+since that's going to be a shared feature of every elevation function we write.</p>
+
+<blockquote class="data-lua"><pre>local minimal_starting_lake_elevation_expression = noise.define_noise_function( function(x,y,tile,map)
+  local starting_lake_distance = noise.distance_from(x, y, noise.var("starting_lake_positions"), 1024)
+  local minimal_starting_lake_depth = 4
+  local lake_noise = tne{
+    type = "function-application",
+    function_name = "factorio-basis-noise",
+    arguments = {
+      x = x,
+      y = y,
+      seed0 = tne(map.seed),
+      seed1 = tne(123),
+      input_scale = noise.fraction(1,8),
+      output_scale = tne(1.5)
+    }
+  }
+  local minimal_starting_lake_bottom =
+    starting_lake_distance &#47; 4 - minimal_starting_lake_depth + lake_noise
+
+  return minimal_starting_lake_bottom
+end)
+
+-- Water level correct, multiply elevation by map scale,
+-- and add minimal starting area lake
+local function finish_elevation(elevation, map)
+  local elevation = water_level_correct(elevation, map)
+  elevation = elevation &#47; map.segmentation_multiplier
+  elevation = noise.min(elevation, minimal_starting_lake_elevation_expression)
+  return elevation
+end</pre></blockquote>
+<p>Let's apply that to our basis noise elevation generator.</p>
+
+<p>Note that <code>finish_elevation</code> divides by segmentation_multiplier <strong>after</strong>
+correcting water level; this way bodies of water keep their overall shape.
+It also means that we should not divide our output by <code>segmentation_multiplier</code> ourselves.</p>
+
+<blockquote class="data-lua"><pre>data:extend{
+  {
+    type = "noise-expression",
+    name = "straight-basis-noise",
+    intended_property = "elevation",
+    expression = noise.define_noise_function(function(x,y,tile,map)
+      local basis_noise = {
+        type = "function-application",
+        function_name = "factorio-basis-noise",
+        arguments = {
+          x = noise.var("x"),
+          y = noise.var("y"),
+          seed0 = tne(noise.var("map_seed")), -- i.e. map.seed
+          seed1 = tne(123), -- Some random number
+          input_scale = tne(noise.var("segmentation_multiplier")&#47;20),
+          output_scale = tne(20)
+        }
+      }
+      return finish_elevation(basis_noise, map)
+    end)
+  }
+}</pre></blockquote>
+<figure>
+<img src="https:&#47;&#47;i.imgur.com&#47;ug1hodP.png"/>
+<figcaption>cursor pointing to the starting area lake</figcaption>
+</figure>
+
+<p>If you slide the water coverage and scale sliders to 600%, you'll see that this produces
+a lot of tiny islands.</p>
+
+<figure>
+<img src="https:&#47;&#47;i.imgur.com&#47;fhAlFDR.png"/>
+</figure>
+
+<p>This is <strong>almost</strong> useful.  Wouldn't it be better if we could make reasonably-sized islands, though?
+Let's decrease the input scale by a factor of 6 so that it's possible to make larger ones.
+The minimum scale setting was a bit too small, anyway:</p>
+
+<figure>
+<img src="https:&#47;&#47;i.imgur.com&#47;y3sluLR.png"/>
+</figure>
+
+<blockquote class="data-lua"><pre>data:extend{
+  {
+    type = "noise-expression",
+    name = "straight-basis-noise",
+    intended_property = "elevation",
+    expression = noise.define_noise_function(function(x,y,tile,map)
+      local basis_noise = {
+        type = "function-application",
+        function_name = "factorio-basis-noise",
+        arguments = {
+          x = noise.var("x"),
+          y = noise.var("y"),
+          seed0 = tne(noise.var("map_seed")), -- i.e. map.seed
+          seed1 = tne(123), -- Some random number
+          input_scale = tne(noise.var("segmentation_multiplier")&#47;120),
+          output_scale = tne(20)
+        }
+      }
+      return finish_elevation(basis_noise, map)
+    end)
+  }
+}</pre></blockquote>
+<figure>
+<img src="https:&#47;&#47;i.imgur.com&#47;yrDvq5N.png"/>
+<figcaption>Islandey things</figcaption>
+</figure>
+
+<p>Note that this doesn't guarantee there will positive elevation at or near the starting point,
+especially on high-scale settings.  I will leave that as an exercise for the reader.</p>
 </body>
 </html>
