@@ -556,3 +556,14 @@ Note that this doesn't guarantee there will positive elevation at or near the st
 especially on high-scale settings.  I will leave that as an exercise for the reader.
 
 ]]--
+
+--[[ For the future
+
+Other stuff that would be good to have examples of in here:
+
+- The factorio-multioctave-noise function
+- Combine expressions in different cool ways
+- Correlate multiple tile properties, e.g. biters at high elevation, or trails
+- Map gen presets
+
+]]--
