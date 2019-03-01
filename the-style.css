@@ -4,6 +4,11 @@ body {
 blockquote {
     margin: 4px 4px 4px 12px;
     padding: 4px;
+    padding-left: 12px;
+}
+blockquote {
+    background: rgba(128,128,128,0.25);
+    border: 1px solid rgba(128,128,128,0.75);
 }
 blockquote.data-lua {
     background: rgba(0,128,192,0.25);
@@ -11,9 +16,10 @@ blockquote.data-lua {
     padding-left: 12px;
 }
 figure {
-    margin: auto;
+    margin: 12px auto 12px auto;
     text-align: center;
 }
 figcaption {
+    margin: 4px;
     font-style: italic;
 }
