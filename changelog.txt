@@ -2,5 +2,7 @@
 Version: 0.0.1
 Date: 28. 02. 2019
   Features:
-    - Examples of literal-value and variable expressions
-
+    - literal-value and variable expressions
+    - 'rings' map type to show 'ridge' function
+    - 'straight-basis-noise' elevation function
+    - Lots of inline documentation about it all
