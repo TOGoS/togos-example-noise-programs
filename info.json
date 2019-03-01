@@ -4,7 +4,8 @@
   "title": "TOGoS's Example Noise Programs",
   "author": "TOGoS",
   "contact": "togos00@gmail.com",
-  "homepage": "https://github.com/TOGoS/TOGFactorioNoisePrograms",
-  "dependencies": ["base >= 0.17"],
+  "homepage": "https://github.com/TOGoS/togos-example-noise-programs",
+  "factorio_version": "0.17",
+  "dependencies": [],
   "description": "Various terrain generators to demonstrate the noise expression system"
 }

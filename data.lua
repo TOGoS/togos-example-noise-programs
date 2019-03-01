@@ -139,8 +139,9 @@ local noise = require("noise")
 
 --[[
 There's a bunch of stuff in `noise`, but probably the most all-around useful function is
-`define_noise_function`.  It lets us define noise expressions using mostly Lua syntax
-as if we're defining a Fua function.  As its argument, it takes a function of `x`, `y`, tile properties, and map properties.
+`define_noise_function`.
+It lets us define noise expressions using mostly Lua syntax as if we're defining a Lua function.
+As its argument, it takes a function of `x`, `y`, tile properties, and map properties.
 
 If we were to define that x-plus-y expression this way, it would look like this:
 ]]--

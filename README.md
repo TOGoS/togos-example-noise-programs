@@ -1,4 +1,4 @@
-TOGoS's Noise Programs.
+TOGoS's Example Noise Programs.
 
 Intended to provide example code for terrain generator writers.
 
