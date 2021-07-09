@@ -1,4 +1,19 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+Date: 09. 07. 2021
+  Changes:
+    - Bump Factorio version to 1.1 in attempt to get this mod to show up in the in-game mods menu
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 09. 07. 2021
+  Changes:
+    - Bump version to 1.0.0 in attempt to get this mod to show up in the in-game mods menu
+---------------------------------------------------------------------------------------------------
+Version: 0.0.3
+Date: 29. 03. 2019
+  Changes:
+    - Use some variable-octave multioctave noise
+---------------------------------------------------------------------------------------------------
 Version: 0.0.2
 Date: 01. 03. 2019
   Changes:
