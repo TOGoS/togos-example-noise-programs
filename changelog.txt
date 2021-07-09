@@ -3,6 +3,7 @@ Version: 1.0.2
 Date: 09. 07. 2021
   Changes:
     - Include 'locale' data in release
+    - Include thumbnail.png
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.1
 Date: 09. 07. 2021
