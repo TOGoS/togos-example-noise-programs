@@ -210,7 +210,7 @@ and the upper limit whenever the input value is higher than the upper limit.</p>
 <p><code>ridge</code> also always returns a value between the lower and upper limits, but does so
 by 'folding' the input back between them.  e.g. <code>ridge(6, 1, 5)</code> would return 4
 (because the input, 6, is one greater than 5, so folding it back under 5 produces 4).
-<code>ridge(-1, 1, 5)</code> would return 2, since the input is 2 below the lower limit.</p>
+<code>ridge(-1, 1, 5)</code> would return 3, because <code>1 + (1 - -1) = 1 + 2 = 3</code>.</p>
 
 <p>We can make a map that's rings of land and water by just taking
 the <code>distance</code> variable (which is made handy as <code>tile.distance</code> when using <code>define_noise_function</code>)
