@@ -204,7 +204,7 @@ and the upper limit whenever the input value is higher than the upper limit.
 `ridge` also always returns a value between the lower and upper limits, but does so
 by 'folding' the input back between them.  e.g. `ridge(6, 1, 5)` would return 4
 (because the input, 6, is one greater than 5, so folding it back under 5 produces 4).
-`ridge(-1, 1, 5)` would return 2, since the input is 2 below the lower limit.
+`ridge(-1, 1, 5)` would return 3, because `1 + (1 - -1) = 1 + 2 = 3`.
 
 We can make a map that's rings of land and water by just taking
 the `distance` variable (which is made handy as `tile.distance` when using `define_noise_function`)
