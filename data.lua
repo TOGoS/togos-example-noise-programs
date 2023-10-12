@@ -559,7 +559,11 @@ especially on high-scale settings.  I will leave that as an exercise for the rea
 
 
 
---[[ Multioctave Noise ]]--
+--[[ Multioctave Noise
+
+I don't currently have anything to say about this.
+It's here so you can choose it when starting a game.
+]]--
 
 data:extend {
   {
@@ -592,7 +596,6 @@ data:extend {
 
 Other stuff that would be good to have examples of in here:
 
-- The factorio-multioctave-noise function
 - Combine expressions in different cool ways
 - Correlate multiple tile properties, e.g. biters at high elevation, or trails
 - Map gen presets
