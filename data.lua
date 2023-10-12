@@ -557,11 +557,45 @@ especially on high-scale settings.  I will leave that as an exercise for the rea
 
 ]]--
 
+
+
+--[[ Multioctave Noise
+
+I don't currently have anything to say about this.
+It's here so you can choose it when starting a game.
+]]--
+
+data:extend {
+  {
+    type = "noise-expression",
+    name = "straight-multioctave-noise",
+    intended_property = "elevation",
+    expression = noise.define_noise_function(function(x,y,tile,map)
+      local scale = 1 / map.segmentation_multiplier
+      local octave_count = noise.log2(1+scale)
+      local multioctave_noise = {
+        type = "function-application",
+        function_name = "factorio-multioctave-noise",
+        arguments = {
+          x = x,
+          y = y,
+          seed0 = map.seed,
+          seed1 = tne(123), -- Some random number
+          input_scale = tne(1/120),
+          output_scale = scale,
+          octaves = octave_count,
+          persistence = tne(0.5)
+        }
+      }
+      return finish_elevation(multioctave_noise, map)
+    end)
+  }
+}
+
 --[[ For the future
 
 Other stuff that would be good to have examples of in here:
 
-- The factorio-multioctave-noise function
 - Combine expressions in different cool ways
 - Correlate multiple tile properties, e.g. biters at high elevation, or trails
 - Map gen presets
