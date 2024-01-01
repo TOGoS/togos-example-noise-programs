@@ -45,7 +45,7 @@ function to_json(thing)
 		if is_list(thing) then
 			local json = "["
 			local sep = ""
-			for k, v in pairs(tab) do
+			for k, v in pairs(thing) do
 				json = json .. sep .. to_json(v)
 				sep = ", "
 			end
