@@ -32,6 +32,22 @@ function is_list(tab)
 	return true
 end
 
+local function sorted_pairs(tab)
+	local keys = {}
+	for k, v in pairs(tab) do
+		table.insert(keys, k)
+	end
+	table.sort(keys)
+	local count = #keys
+	for _, k in ipairs(keys) do
+		local i = 0
+		return function() 
+			i = i + 1
+			if i <= count then return keys[i], tab[keys[i]] end
+		end
+	end
+end
+
 function to_json(thing, indent_delta, lsep, indent)
 	local typ = type(thing)
 	if indent_delta == nil then indent_delta = "" end
@@ -66,7 +82,7 @@ function to_json(thing, indent_delta, lsep, indent)
 		else
 			local json = "{"
 			local sep = lsep .. subindent
-			for k, v in pairs(thing) do
+			for k, v in sorted_pairs(thing) do
 				json = json .. sep .. to_json(tostring(k)) .. ": " .. to_json(v, indent_delta, lsep, subindent)
 				sep = "," .. lsep .. subindent
 				is_non_empty = true
@@ -79,7 +95,52 @@ function to_json(thing, indent_delta, lsep, indent)
 	end
 end
 
+local fmtf2ne_infix
+local fmt2fne
+
+function fmtf2ne_infix(op, args)
+	local res = ""
+	local sep = ""
+	local opsep = " " .. op .. " "
+	local argcount = 0
+	for k, v in pairs(args) do
+		res = res .. sep .. fmtf2ne(v)
+		sep = opsep
+		argcount = argcount + 1
+	end
+	if argcount == 0 then
+		error("No arguments to infix-format!")
+	elseif argcount == 1 then
+		return res
+	else
+		return "(" .. res .. ")"
+	end
+end
+
+function fmtf2ne(expr)
+	if expr.type == "function-application" then
+		if expr.function_name == "add" then
+			return fmtf2ne_infix("+", expr.arguments)
+		elseif expr.function_name == "divide" then
+			return fmtf2ne_infix("/", expr.arguments)
+		else
+			error("Don't yet know how to convert function '" .. expr.function_name .. "'")
+		end
+	elseif expr.type == "literal-number" then
+		return tostring(expr.literal_value)
+	elseif expr.type == "literal-boolean" then
+		return tostring(expr.literal_value)
+	elseif expr.type == "variable" then
+		return tostring(expr.variable_name)
+	elseif expr.type == nil then
+		error("Expression has no type: " .. to_json(expr))
+	else
+		error("Don't yet know how to convert expression type '" .. expr.type .. "'")
+	end
+end
+
 return {
 	is_list = is_list,
-	to_json = to_json
+	to_json = to_json,
+	to_factorio_2_noise_expression_string = fmtf2ne,
 }
