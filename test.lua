@@ -41,10 +41,17 @@ local function test_f1_to_f2(f2str, f1expr, outer_precedence)
 	assert_equals(f2str, conv.to_factorio_2_noise_expression_string(f1expr, outer_precedence))
 end
 
+-- Simple cases
+test_f1_to_f2('6 + x', tne(6) + noise.var('x'))
+
+-- Don't need to parenthesize negative numbers when used in + and - expressions
 test_f1_to_f2('(-6 + x)', tne(-6) + noise.var('x'), 9999)
 test_f1_to_f2('-6 + x', tne(-6) + noise.var('x'))
-test_f1_to_f2('-6 / x', tne(-6) / noise.var('x'))
-test_f1_to_f2('-6 * x', tne(-6) * noise.var('x'))
+
+-- But do when outer precedence is higher:
+test_f1_to_f2('(-6) / x', tne(-6) / noise.var('x'))
+test_f1_to_f2('(-6) * x', tne(-6) * noise.var('x'))
+test_f1_to_f2('(-3) ^ x', tne(-3) ^ noise.var('x'))
 
 -- Homogeneous/associative/commutative arguments should be flattened
 test_f1_to_f2('x + y + z', noise.var('x') + noise.var('y') + noise.var('z'))
@@ -57,17 +64,17 @@ test_f1_to_f2('x - ((5 + y) - z)', noise.var('x') - ((5 + noise.var('y')) - nois
 -- Don't need parens when inner operation has higher precedence:
 test_f1_to_f2('x + y * z', noise.var('x') + (noise.var('y') * noise.var('z')))
 
--- But do need it othersise:
+-- But do need it otherwise:
 test_f1_to_f2('(x + y) * z', (noise.var('x') + noise.var('y')) * noise.var('z'))
 
 -- TODO: Test conversion of functions
 -- referenced by resource_autoplace_all_patches example:
--- - + - * / ^
--- - min / max
--- - spot_noise
--- - basis_noise
--- - random_penalty_between
+-- - [X] + - * / ^
+-- - [ ] min / max
+-- - [ ] spot_noise
+-- - [ ] basis_noise
+-- - [ ] random_penalty_between
 -- Constants:
--- - pi
+-- - [ ] pi
 
 -- print(conv.to_json(extract_named_noise_expressions(data), "\t"))

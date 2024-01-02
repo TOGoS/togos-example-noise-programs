@@ -110,8 +110,6 @@ local function_data = {
 		{
 			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Subtract",
 			factorio1_function_name = "subtract",
-			is_commutative = false,
-			is_associative = false,
 		},
 		{
 			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Multiply",
@@ -122,8 +120,10 @@ local function_data = {
 		{
 			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Divide",
 			factorio1_function_name = "divide",
-			is_commutative = false,
-			is_associative = false,
+		},
+		{
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Exponentiate",
+			factorio1_function_name = "exponentiate",
 		},
 	},
 	factorio2_functions = {
@@ -151,7 +151,12 @@ local function_data = {
 			precedence = 200,
 			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Divide"
 		},
-
+		{
+			syntax_mode = "infix",
+			symbol = "^",
+			precedence = 300,
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Exponentiate"
+		},
 	}
 }
 
@@ -279,7 +284,11 @@ function fmtf2ne(expr, outer_precedence)
 			error("No Factorio 2 functions registered for '" .. expr.function_name .. "'")
 		end
 	elseif expr.type == "literal-number" then
-		return tostring(expr.literal_value)
+		if expr.literal_value < 0 and outer_precedence > 100 then
+			return "(" .. tostring(expr.literal_value) .. ")"
+		else
+			return tostring(expr.literal_value)
+		end
 	elseif expr.type == "literal-boolean" then
 		return tostring(expr.literal_value)
 	elseif expr.type == "variable" then
