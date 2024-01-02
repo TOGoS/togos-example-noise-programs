@@ -95,6 +95,101 @@ function to_json(thing, indent_delta, lsep, indent)
 	end
 end
 
+local function_data = {
+	factorio1_functions = {
+		{
+			factorio1_function_name = "add",
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Add"
+		},
+		{
+			factorio1_function_name = "subtract",
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Subtract"
+		},
+		{
+			factorio1_function_name = "multiply",
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Multiply"
+		},
+		{
+			factorio1_function_name = "divide",
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Divide"
+		},
+	},
+	factorio2_functions = {
+		{
+			syntax_mode = "infix",
+			symbol = "+",
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Add"
+		},
+		{
+			syntax_mode = "infix",
+			symbol = "-",
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Subtract"
+		},
+		{
+			syntax_mode = "infix",
+			symbol = "*",
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Multiply"
+		},
+		{
+			syntax_mode = "infix",
+			symbol = "/",
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Divide"
+		},
+
+	}
+}
+
+local function clone(obj)
+	if type(obj) == "table" then
+		local the_clone = {}
+		for k, v in pairs(obj) do
+			the_clone[k] = clone(v)
+		end
+		return the_clone
+	else
+		return obj
+	end
+end
+
+local function make_function_database(raw_data)
+	local db = { raw_data = raw_data }
+	local merged = {}
+	local merged_by_f1_name = {}
+	local function initfunc(name)
+		if merged[name] ~= nil then
+			return merged[name]
+		else
+			merged[name] = {
+				factorio2_functions = { }
+			}
+			return merged[name]
+		end
+	end
+	for _, f1func in pairs(raw_data.factorio1_functions) do
+		local func = initfunc(f1func.togvm_function_name)
+		for k, v in pairs(f1func) do
+			func[k] = v
+		end
+		merged_by_f1_name[f1func.factorio1_function_name] = func
+	end
+	for _, f2func in pairs(raw_data.factorio2_functions) do
+		local func = initfunc(f2func.togvm_function_name)
+		func.factorio2_functions[f2func.symbol] = f2func
+	end
+	db.merged = merged
+	db.merged_by_f1_name = merged_by_f1_name
+	setmetatable(db, { __index = {
+		get_by_name = function(self, name) return self.merged[name] end,
+		get_by_factorio1_name = function(self, name) return self.merged_by_f1_name[name] end,
+	}})
+	return db
+end
+
+local function_database = make_function_database(function_data)
+-- print( to_json(function_database,"\t") )
+
+
+
 local fmtf2ne_infix
 local fmt2fne
 
@@ -119,12 +214,17 @@ end
 
 function fmtf2ne(expr)
 	if expr.type == "function-application" then
-		if expr.function_name == "add" then
-			return fmtf2ne_infix("+", expr.arguments)
-		elseif expr.function_name == "divide" then
-			return fmtf2ne_infix("/", expr.arguments)
-		else
+		local func = function_database:get_by_factorio1_name(expr.function_name)
+		if func == nil then
 			error("Don't yet know how to convert function '" .. expr.function_name .. "'")
+		else
+			for _, f2func in pairs(func.factorio2_functions) do
+				if f2func.syntax_mode == "infix" then
+					return fmtf2ne_infix(f2func.symbol, expr.arguments)
+				end
+				break
+			end
+			error("No Factorio 2 functions registered for '" .. expr.function_name .. "'")
 		end
 	elseif expr.type == "literal-number" then
 		return tostring(expr.literal_value)
