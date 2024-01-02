@@ -35,6 +35,9 @@ end
 local function sorted_pairs(tab)
 	local keys = {}
 	for k, v in pairs(tab) do
+		if type(k) ~= 'string' then
+			error("sorted_pairs expects keys to be strings, but found " .. k)
+		end
 		table.insert(keys, k)
 	end
 	table.sort(keys)
@@ -98,41 +101,54 @@ end
 local function_data = {
 	factorio1_functions = {
 		{
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Add",
 			factorio1_function_name = "add",
-			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Add"
+			arguments_are_homogeneous = true,
+			is_commutative = true,
+			is_associative = true,
 		},
 		{
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Subtract",
 			factorio1_function_name = "subtract",
-			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Subtract"
+			is_commutative = false,
+			is_associative = false,
 		},
 		{
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Multiply",
 			factorio1_function_name = "multiply",
-			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Multiply"
+			is_commutative = true,
+			is_associative = true,
 		},
 		{
+			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Divide",
 			factorio1_function_name = "divide",
-			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Divide"
+			is_commutative = false,
+			is_associative = false,
 		},
 	},
 	factorio2_functions = {
 		{
 			syntax_mode = "infix",
 			symbol = "+",
+			precedence = 100,
 			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Add"
 		},
 		{
 			syntax_mode = "infix",
 			symbol = "-",
+			precedence = 100,
 			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Subtract"
 		},
 		{
 			syntax_mode = "infix",
 			symbol = "*",
+			precedence = 200,
 			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Multiply"
 		},
 		{
 			syntax_mode = "infix",
 			symbol = "/",
+			precedence = 200,
 			togvm_function_name = "http://ns.nuke24.net/TOGVM/Functions/Divide"
 		},
 
@@ -193,13 +209,13 @@ local function_database = make_function_database(function_data)
 local fmtf2ne_infix
 local fmt2fne
 
-function fmtf2ne_infix(op, args)
+function fmtf2ne_infix(op, args, outer_precedence)
 	local res = ""
 	local sep = ""
-	local opsep = " " .. op .. " "
+	local opsep = " " .. op.symbol .. " "
 	local argcount = 0
 	for k, v in pairs(args) do
-		res = res .. sep .. fmtf2ne(v)
+		res = res .. sep .. fmtf2ne(v, op.precedence)
 		sep = opsep
 		argcount = argcount + 1
 	end
@@ -208,11 +224,46 @@ function fmtf2ne_infix(op, args)
 	elseif argcount == 1 then
 		return res
 	else
-		return "(" .. res .. ")"
+		if op.precedence <= outer_precedence then
+			return "(" .. res .. ")"
+		else
+			return res
+		end
 	end
 end
 
-function fmtf2ne(expr)
+local function _flatten(expr, into)
+	if expr.type == "function-application" and expr.function_name == into.function_name then
+		for _, v in pairs(expr.arguments) do
+			_flatten(v, into)
+		end
+	else
+		table.insert(into.arguments, expr)
+	end
+end
+
+-- Flatten function calls like foo(a, foo(b, c))
+local function flatten(expr)
+	if expr.type ~= "function-application" then return expr end
+	
+	local func = function_database:get_by_factorio1_name(expr.function_name)
+	if func == nil then return expr end
+
+	if func.arguments_are_homogeneous and func.is_associative and func.is_commutative then
+		local res = {
+			type = "function-application",
+			function_name = expr.function_name,
+			arguments = {}
+		}
+		_flatten(expr, res)
+		res.source_location = expr.source_location
+		return res
+	end
+	return expr
+end
+
+function fmtf2ne(expr, outer_precedence)
+	if outer_precedence == nil then outer_precedence = 9999 end
 	if expr.type == "function-application" then
 		local func = function_database:get_by_factorio1_name(expr.function_name)
 		if func == nil then
@@ -220,7 +271,8 @@ function fmtf2ne(expr)
 		else
 			for _, f2func in pairs(func.factorio2_functions) do
 				if f2func.syntax_mode == "infix" then
-					return fmtf2ne_infix(f2func.symbol, expr.arguments)
+					expr = flatten(expr)
+					return fmtf2ne_infix(f2func, expr.arguments, outer_precedence)
 				end
 				break
 			end

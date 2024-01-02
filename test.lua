@@ -36,7 +36,38 @@ assert_equals('[]', conv.to_json{})
 assert_equals('{ "baz": "quux", "foo": "bar" }', conv.to_json{ foo = "bar", baz = "quux" })
 assert_equals('{\n\t"baz": "quux",\n\t"foo": "bar"\n}', conv.to_json({ foo = "bar", baz = "quux" }, "\t"))
 
-assert_equals('(-6 + x)', conv.to_factorio_2_noise_expression_string(tne(-6) + noise.var('x')))
-assert_equals('(-6 / x)', conv.to_factorio_2_noise_expression_string(tne(-6) / noise.var('x')))
+local function test_f1_to_f2(f2str, f1expr, outer_precedence)
+	if outer_precedence == nil then outer_precedence = 0 end
+	assert_equals(f2str, conv.to_factorio_2_noise_expression_string(f1expr, outer_precedence))
+end
+
+test_f1_to_f2('(-6 + x)', tne(-6) + noise.var('x'), 9999)
+test_f1_to_f2('-6 + x', tne(-6) + noise.var('x'))
+test_f1_to_f2('-6 / x', tne(-6) / noise.var('x'))
+test_f1_to_f2('-6 * x', tne(-6) * noise.var('x'))
+
+-- Homogeneous/associative/commutative arguments should be flattened
+test_f1_to_f2('x + y + z', noise.var('x') + noise.var('y') + noise.var('z'))
+test_f1_to_f2('x + (5 - y) + z', noise.var('x') + (5 - noise.var('y')) + noise.var('z'))
+
+-- Non-associative/commutative operations don't flatten
+test_f1_to_f2('(x - (5 + y)) - z', (noise.var('x') - (5 + noise.var('y'))) - noise.var('z'))
+test_f1_to_f2('x - ((5 + y) - z)', noise.var('x') - ((5 + noise.var('y')) - noise.var('z')))
+
+-- Don't need parens when inner operation has higher precedence:
+test_f1_to_f2('x + y * z', noise.var('x') + (noise.var('y') * noise.var('z')))
+
+-- But do need it othersise:
+test_f1_to_f2('(x + y) * z', (noise.var('x') + noise.var('y')) * noise.var('z'))
+
+-- TODO: Test conversion of functions
+-- referenced by resource_autoplace_all_patches example:
+-- - + - * / ^
+-- - min / max
+-- - spot_noise
+-- - basis_noise
+-- - random_penalty_between
+-- Constants:
+-- - pi
 
 -- print(conv.to_json(extract_named_noise_expressions(data), "\t"))
