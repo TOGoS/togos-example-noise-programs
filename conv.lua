@@ -300,8 +300,27 @@ function fmtf2ne(expr, outer_precedence)
 	end
 end
 
+local function convert_extension_item(thing)
+	return thing
+end
+
+local function convert_extension(stuff)
+	local converted = {}
+	for k, v in pairs(stuff) do
+		converted[k] = convert_extension_item(v)
+	end
+	return converted
+end
+
+local function make_converting_data_extender(old_extend)
+	return function(self, input)
+		return old_extend(self, convert_extension(input))
+	end
+end
+
 return {
 	is_list = is_list,
 	to_json = to_json,
 	to_factorio_2_noise_expression_string = fmtf2ne,
+	make_converting_data_extender = make_converting_data_extender,
 }

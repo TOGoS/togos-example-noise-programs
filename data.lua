@@ -1,3 +1,17 @@
+local conv = require "conv"
+local extextend = conv.make_converting_data_extender(data.extend)
+
+local data = {
+   actual_data = data,
+   extend = function(self, stuff)
+      if type(self.actual_data) ~= 'table' then
+         error("actual_data not a table")
+      end
+      log("Wrapping data:extend: " .. #stuff .. " items")
+      return extextend(self.actual_data, stuff)
+   end
+}
+
 --[[
 I'm going to define some custom elevation generators,
 because elevation has the most dramatic effect
